@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ref Tracker">
+<title>Ref Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --border: #e2e0d8;
+    --text: #1a1a18;
+    --muted: #7a7870;
+    --accent: #2d5a3d;
+    --accent-light: #e8f2eb;
+    --danger: #c0392b;
+    --danger-light: #fdf0ef;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overscroll-behavior: none;
+  }
+
+  .app {
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    padding: 56px 20px 16px;
+    background: var(--bg);
+  }
+  .header-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+  .header-sub {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 2px;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    gap: 6px;
+    padding: 0 20px 16px;
+    background: var(--bg);
+  }
+  .tab {
+    flex: 1;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 20px;
+    transition: all 0.15s;
+    background: transparent;
+    border: 1.5px solid transparent;
+  }
+  .tab.active {
+    color: var(--accent);
+    background: var(--accent-light);
+    border-color: var(--accent-light);
+  }
+
+  /* Content */
+  .content {
+    flex: 1;
+    padding: 0 20px 100px;
+    overflow-y: auto;
+  }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Form */
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+  .field textarea { height: 80px; resize: none; line-height: 1.5; }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .btn {
+    width: 100%;
+    padding: 15px;
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    margin-top: 6px;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+  }
+  .btn-sm {
+    width: auto;
+    padding: 9px 16px;
+    font-size: 14px;
+    margin-top: 0;
+  }
+
+  .toast {
+    background: var(--accent);
+    color: white;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 12px;
+    display: none;
+    text-align: center;
+  }
+  .toast.show { display: block; animation: fadeIn 0.2s; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .card-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card-left { flex: 1; }
+  .card-right { text-align: right; flex-shrink: 0; }
+  .card-date {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 3px;
+  }
+  .card-loc { font-size: 16px; font-weight: 600; }
+  .card-cost { font-size: 17px; font-weight: 600; color: var(--accent); }
+  .card-meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+  .card-notes { font-size: 13px; color: var(--muted); margin-top: 4px; font-style: italic; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+  .badge-byot { background: #e8f0fb; color: #2952a3; }
+  .badge-nch { background: #fef3e2; color: #a05c07; }
+  .del-btn {
+    font-size: 12px;
+    color: var(--danger);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0;
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+  .del-btn:active { opacity: 1; }
+
+  /* Total bar */
+  .total-bar {
+    background: var(--accent-light);
+    border: 1.5px solid #c5dfc9;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .total-label { font-size: 13px; color: var(--accent); font-weight: 500; }
+  .total-amt { font-size: 20px; font-weight: 600; color: var(--accent); font-family: 'DM Mono', monospace; }
+
+  /* Filter row */
+  .filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .filter-row select { flex: 1; }
+
+  /* Invoice cards */
+  .inv-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .inv-card:active { border-color: var(--accent); }
+  .inv-month { font-size: 16px; font-weight: 600; }
+  .inv-meta { font-size: 12px; color: var(--muted); margin-top: 3px; font-family: 'DM Mono', monospace; }
+  .inv-total { font-size: 17px; font-weight: 600; color: var(--accent); font-family: 'DM Mono', monospace; }
+  .inv-arrow { font-size: 18px; color: var(--muted); margin-left: 8px; }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 40px 0;
+    font-style: italic;
+  }
+
+  .section-header {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 10px;
+  }
+
+  .inv-generate-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .inv-generate-card .field { margin-bottom: 10px; }
+
+  select option { font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-title">Referee</div>
+    <div class="header-sub">Game Tracker</div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active" onclick="showTab('log')">Log</div>
+    <div class="tab" onclick="showTab('history')">History</div>
+    <div class="tab" onclick="showTab('invoices')">Invoices</div>
+  </div>
+
+  <div class="content">
+
+    <!-- LOG -->
+    <div id="tab-log" class="section active">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label>Time</label>
+          <input type="text" id="f-time" placeholder="e.g. 9, 10PM">
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <select id="f-type">
+            <option value="BYOT">BYOT</option>
+            <option value="NCH">NCH</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Location</label>
+        <input type="text" id="f-location" placeholder="e.g. Cambridge, Everett">
+      </div>
+      <div class="field">
+        <label>Amount ($)</label>
+        <input type="number" id="f-cost" placeholder="0.00" step="0.01" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <textarea id="f-notes" placeholder="e.g. Day of, No SK, 1 ref"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="addGame()">Save game</button>
+      <div class="toast" id="save-toast">Game saved!</div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="tab-history" class="section">
+      <div class="filter-row">
+        <select id="hist-filter" onchange="renderHistory()">
+          <option value="all">All games</option>
+        </select>
+      </div>
+      <div class="total-bar" id="hist-total" style="display:none">
+        <span class="total-label">Total</span>
+        <span class="total-amt" id="hist-total-amt">$0.00</span>
+      </div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- INVOICES -->
+    <div id="tab-invoices" class="section">
+      <div class="inv-generate-card">
+        <div class="section-header" style="margin-bottom:12px">Generate invoice</div>
+        <div class="field">
+          <label>Month</label>
+          <select id="inv-month"></select>
+        </div>
+        <button class="btn btn-primary" onclick="generateInvoice()">Download PDF</button>
+      </div>
+      <div class="section-header">Past invoices</div>
+      <div id="invoice-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+let games = JSON.parse(localStorage.getItem('reffing_games') || '[]');
+let invoices = JSON.parse(localStorage.getItem('reffing_invoices') || '[]');
+
+function persist() {
+  localStorage.setItem('reffing_games', JSON.stringify(games));
+  localStorage.setItem('reffing_invoices', JSON.stringify(invoices));
+}
+
+function showTab(t) {
+  document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['log','history','invoices'][i] === t));
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  if (t === 'history') { populateMonthFilter(); renderHistory(); }
+  if (t === 'invoices') { populateInvMonths(); renderInvoices(); }
+}
+
+// Set default date to today
+document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+
+function addGame() {
+  const date = document.getElementById('f-date').value;
+  const time = document.getElementById('f-time').value.trim();
+  const location = document.getElementById('f-location').value.trim();
+  const type = document.getElementById('f-type').value;
+  const cost = parseFloat(document.getElementById('f-cost').value);
+  const notes = document.getElementById('f-notes').value.trim();
+  if (!date || !time || !location || isNaN(cost) || cost <= 0) {
+    alert('Please fill in date, time, location, and a valid amount.');
+    return;
+  }
+  games.push({ id: Date.now(), date, time, location, type, cost, notes });
+  games.sort((a, b) => a.date.localeCompare(b.date));
+  persist();
+  document.getElementById('f-time').value = '';
+  document.getElementById('f-location').value = '';
+  document.getElementById('f-cost').value = '';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  const t = document.getElementById('save-toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function formatDate(d) {
+  const [y, m, day] = d.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return parseInt(day) + '-' + months[parseInt(m) - 1];
+}
+
+function getMonthKey(d) {
+  const [y, m] = d.split('-');
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return months[parseInt(m) - 1] + ' ' + y;
+}
+
+function sortedMonthKeys() {
+  const keys = [...new Set(games.map(g => getMonthKey(g.date)))];
+  return keys.sort((a, b) => {
+    const mn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const [am, ay] = a.split(' '), [bm, by] = b.split(' ');
+    return parseInt(ay) - parseInt(by) || mn.indexOf(am) - mn.indexOf(bm);
+  });
+}
+
+function populateMonthFilter() {
+  const sel = document.getElementById('hist-filter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">All games</option>';
+  sortedMonthKeys().reverse().forEach(k => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k;
+    sel.appendChild(o);
+  });
+  if (cur) sel.value = cur;
+}
+
+function renderHistory() {
+  const filter = document.getElementById('hist-filter').value;
+  const filtered = filter === 'all' ? games : games.filter(g => getMonthKey(g.date) === filter);
+  const list = document.getElementById('history-list');
+  const totalBar = document.getElementById('hist-total');
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty">No games for this period.</div>';
+    totalBar.style.display = 'none';
+    return;
+  }
+  const total = filtered.reduce((s, g) => s + g.cost, 0);
+  document.getElementById('hist-total-amt').textContent = '$' + total.toFixed(2);
+  totalBar.style.display = 'flex';
+  list.innerHTML = [...filtered].reverse().map(g => `
+    <div class="card">
+      <div class="card-row">
+        <div class="card-left">
+          <div class="card-date">${formatDate(g.date)}</div>
+          <div class="card-loc">${g.location}</div>
+        </div>
+        <div class="card-right">
+          <div class="card-cost">$${g.cost.toFixed(2)}</div>
+          <button class="del-btn" onclick="deleteGame(${g.id})">remove</button>
+        </div>
+      </div>
+      <div class="card-meta">
+        ${g.time} &nbsp;·&nbsp; <span class="badge badge-${g.type.toLowerCase()}">${g.type}</span>
+      </div>
+      ${g.notes ? `<div class="card-notes">${g.notes}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function deleteGame(id) {
+  if (!confirm('Remove this game?')) return;
+  games = games.filter(g => g.id !== id);
+  persist();
+  populateMonthFilter();
+  renderHistory();
+}
+
+function populateInvMonths() {
+  const sel = document.getElementById('inv-month');
+  const keys = sortedMonthKeys().reverse();
+  sel.innerHTML = keys.length
+    ? keys.map(k => `<option value="${k}">${k}</option>`).join('')
+    : '<option>No games logged yet</option>';
+}
+
+function renderInvoices() {
+  const list = document.getElementById('invoice-list');
+  if (!invoices.length) { list.innerHTML = '<div class="empty">No invoices yet.</div>'; return; }
+  list.innerHTML = [...invoices].reverse().map((inv, ri) => {
+    const idx = invoices.length - 1 - ri;
+    return `<div class="inv-card" onclick="downloadInvoice(${idx})">
+      <div>
+        <div class="inv-month">${inv.month}</div>
+        <div class="inv-meta">${inv.count} game${inv.count !== 1 ? 's' : ''} · ${inv.created}</div>
+      </div>
+      <div style="display:flex;align-items:center">
+        <div class="inv-total">$${inv.total.toFixed(2)}</div>
+        <div class="inv-arrow">↓</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function generateInvoice() {
+  const month = document.getElementById('inv-month').value;
+  if (!month || month === 'No games logged yet') return;
+  const filtered = games.filter(g => getMonthKey(g.date) === month);
+  if (!filtered.length) { alert('No games for ' + month); return; }
+  const total = filtered.reduce((s, g) => s + g.cost, 0);
+  const created = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const inv = { month, total, count: filtered.length, created, games: filtered };
+  invoices.push(inv);
+  persist();
+  renderInvoices();
+  buildPDF(inv);
+}
+
+function downloadInvoice(i) {
+  buildPDF(invoices[i]);
+}
+
+function buildPDF(inv) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+  const margin = 56;
+  const pageW = doc.internal.pageSize.getWidth();
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(22);
+  doc.setTextColor(30, 30, 30);
+  doc.text('Referee Invoice', margin, 64);
+
+  doc.setFontSize(11);
+  doc.setTextColor(120, 120, 110);
+  doc.text(inv.month, margin, 82);
+  doc.text('Created ' + inv.created, pageW - margin, 82, { align: 'right' });
+
+  doc.setDrawColor(210, 208, 200);
+  doc.setLineWidth(0.5);
+  doc.line(margin, 96, pageW - margin, 96);
+
+  const rows = inv.games.map(g => {
+    const costStr = g.notes ? `$${g.cost.toFixed(2)} (${g.notes})` : `$${g.cost.toFixed(2)}`;
+    return [formatDate(g.date), g.time, g.location, g.type, costStr];
+  });
+
+  doc.autoTable({
+    startY: 108,
+    head: [['Date', 'Time', 'Location', 'Type', 'Cost']],
+    body: rows,
+    foot: [['', '', '', 'Total', '$' + inv.total.toFixed(2)]],
+    margin: { left: margin, right: margin },
+    styles: {
+      fontSize: 10,
+      cellPadding: { top: 7, bottom: 7, left: 6, right: 6 },
+      font: 'helvetica',
+      textColor: [30, 30, 30],
+      lineColor: [220, 218, 210],
+      lineWidth: 0.3,
+    },
+    headStyles: {
+      fillColor: [245, 244, 240],
+      textColor: [100, 98, 90],
+      fontStyle: 'normal',
+      fontSize: 9,
+      lineWidth: 0.3,
+      lineColor: [220, 218, 210],
+    },
+    footStyles: {
+      fillColor: [245, 244, 240],
+      textColor: [30, 30, 30],
+      fontStyle: 'bold',
+      fontSize: 11,
+      lineWidth: 0,
+    },
+    bodyStyles: {
+      lineColor: [230, 228, 220],
+      lineWidth: 0.3,
+    },
+    alternateRowStyles: {
+      fillColor: [250, 249, 247],
+    },
+    columnStyles: {
+      4: { halign: 'right' }
+    },
+  });
+
+  doc.save('Invoice-' + inv.month.replace(' ', '-') + '.pdf');
+}
+
+// Init
+renderHistory();
+</script>
+</body>
+</html>
